@@ -1,4 +1,5 @@
 ﻿using eAgenda.Core.Aplicacao.Compartilhado;
+using eAgenda.Core.Aplicacao.ModuloContato.Commands;
 using eAgenda.Core.Dominio.Compartilhado;
 using eAgenda.Core.Dominio.ModuloContato;
 using FluentResults;

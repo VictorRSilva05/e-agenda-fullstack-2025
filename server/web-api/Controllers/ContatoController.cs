@@ -1,32 +1,18 @@
 using eAgenda.Core.Aplicacao.ModuloContato.Cadastrar;
+using eAgenda.Core.Aplicacao.ModuloContato.Commands;
 using eAgenda.Core.Dominio.ModuloContato;
-using eAgenda.WebApi.Models.ModuloContato.Cadastrar;
+using eAgenda.WebApi.Models.ModuloContato;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
 
 namespace eAgenda.WebApi.Controllers;
 
 [ApiController]
-[Route("[controller]")]
-public class ContatoController : ControllerBase
+[Route("contatos")]
+public class ContatoController(IMediator mediator) : ControllerBase
 {
-    private readonly IMediator mediator;
-    private readonly IRepositorioContato repositorioContato;
-    private readonly ILogger<ContatoController> logger;
-
-    public ContatoController(
-        IMediator mediator,
-        IRepositorioContato repositorioContato,
-        ILogger<ContatoController> logger
-    )
-    {
-        this.mediator = mediator;
-        this.repositorioContato = repositorioContato;
-        this.logger = logger;
-    }
-
     [HttpPost]
-    public async Task<IActionResult> Cadastrar(CadastrarContatoRequest request)
+    public async Task<ActionResult<CadastrarContatoResponse>> Cadastrar(CadastrarContatoRequest request)
     {
         var command = new CadastrarContatoCommand(
              request.Nome,
@@ -46,11 +32,87 @@ public class ContatoController : ControllerBase
         return Created(string.Empty, response);
     }
 
-    [HttpGet]
-    public async Task<IActionResult> SelecionarRegistros()
+    [HttpPut("{Id:guid}")]
+    public async Task<ActionResult<EditarContatoResponse>> Editar(Guid id, EditarContatoRequest request)
     {
-        var registros = await repositorioContato.SelecionarRegistrosAsync();
+        var command = new EditarContatoCommand(
+            id,
+            request.Nome,
+            request.Telefone,
+            request.Email,
+            request.Empresa,
+            request.Cargo
+            );
 
-        return Ok(registros);
+        var result = await mediator.Send(command);
+
+        if (result.IsFailed)
+            return BadRequest();
+
+        var response = new EditarContatoResponse(
+            result.Value.Nome,
+            result.Value.Telefone,
+            result.Value.Email,
+            result.Value.Empresa,
+            result.Value.Cargo
+            );
+
+        return Ok(response);
+    }
+
+    [HttpDelete("{Id:guid}")]
+    public async Task<ActionResult<ExcluirContatoResponse>> Excluir(Guid Id)
+    {
+        var command = new ExcluirContatoCommand(Id);
+
+        var result = await mediator.Send(command);
+
+        if(result.IsFailed) 
+            return BadRequest();
+
+        return NoContent();
+    }
+
+    [HttpGet]
+    public async Task<ActionResult<SelecionarContatosResponse>> SelecionarRegistros(
+        [FromQuery] SelecionarContatosRequest? request
+        )
+    {
+        var query = new SelecionarContatosQuery(request?.Quantidade);
+
+        var result = await mediator.Send(query);
+
+        if (result.IsFailed)
+            return BadRequest();
+
+        var response = new SelecionarContatosResponse(
+            result.Value.Contatos.Count,
+            result.Value.Contatos
+            );
+
+        return Ok(response);
+    }
+
+    [HttpGet("{id:guid}")]
+    public async Task<ActionResult<SelecionarContatoPorIdResponse>> SelecionarRegistroPorId(Guid id)
+    {
+        var query = new SelecionarContatoPorIdQuery(id);
+
+        var result = await mediator.Send(query);
+
+        if (result.IsFailed)
+            return NotFound(id);
+
+        var response = new SelecionarContatoPorIdResponse(
+            result.Value.Id,
+            result.Value.Nome,
+            result.Value.Telefone,
+            result.Value.Email,
+            result.Value.Empresa,
+            result.Value.Cargo,
+            result.Value.Compromissos
+            );
+
+        return Ok(response);
     }
 }
