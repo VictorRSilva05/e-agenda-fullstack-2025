@@ -1,3 +1,4 @@
+using AutoMapper;
 using eAgenda.Core.Aplicacao.ModuloContato.Cadastrar;
 using eAgenda.Core.Aplicacao.ModuloContato.Commands;
 using eAgenda.Core.Dominio.ModuloContato;
@@ -9,25 +10,19 @@ namespace eAgenda.WebApi.Controllers;
 
 [ApiController]
 [Route("contatos")]
-public class ContatoController(IMediator mediator) : ControllerBase
+public class ContatoController(IMediator mediator, IMapper mapper) : ControllerBase
 {
     [HttpPost]
     public async Task<ActionResult<CadastrarContatoResponse>> Cadastrar(CadastrarContatoRequest request)
     {
-        var command = new CadastrarContatoCommand(
-             request.Nome,
-             request.Telefone,
-             request.Email,
-             request.Empresa,
-             request.Cargo
-        );
+        var command = mapper.Map<CadastrarContatoCommand>(request);
 
         var result = await mediator.Send(command);
 
         if (result.IsFailed)
             return BadRequest();
 
-        var response = new CadastrarContatoResponse(result.Value.Id);
+        var response = mapper.Map<CadastrarContatoResponse>(result.Value);
 
         return Created(string.Empty, response);
     }
@@ -35,27 +30,14 @@ public class ContatoController(IMediator mediator) : ControllerBase
     [HttpPut("{Id:guid}")]
     public async Task<ActionResult<EditarContatoResponse>> Editar(Guid id, EditarContatoRequest request)
     {
-        var command = new EditarContatoCommand(
-            id,
-            request.Nome,
-            request.Telefone,
-            request.Email,
-            request.Empresa,
-            request.Cargo
-            );
+        var command = mapper.Map<(Guid, EditarContatoRequest), EditarContatoCommand>((id, request));
 
         var result = await mediator.Send(command);
 
         if (result.IsFailed)
             return BadRequest();
 
-        var response = new EditarContatoResponse(
-            result.Value.Nome,
-            result.Value.Telefone,
-            result.Value.Email,
-            result.Value.Empresa,
-            result.Value.Cargo
-            );
+        var response = mapper.Map<EditarContatoResponse>(result.Value);
 
         return Ok(response);
     }
