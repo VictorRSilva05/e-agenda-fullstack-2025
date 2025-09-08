@@ -1,4 +1,5 @@
-﻿using eAgenda.Core.Aplicacao.Compartilhado;
+﻿using AutoMapper;
+using eAgenda.Core.Aplicacao.Compartilhado;
 using eAgenda.Core.Aplicacao.ModuloContato.Commands;
 using eAgenda.Core.Dominio.ModuloContato;
 using FluentResults;
@@ -8,6 +9,7 @@ using System.Collections.Immutable;
 
 namespace eAgenda.Core.Aplicacao.ModuloContato.Handlers;
 public class SelecionarContatoPorIdQueryHandler(
+    IMapper mapper,
     IRepositorioContato repositorioContato,
     ILogger<SelecionarContatoPorIdQueryHandler> logger
     ) : IRequestHandler<SelecionarContatoPorIdQuery, Result<SelecionarContatoPorIdResult>>
@@ -21,20 +23,7 @@ public class SelecionarContatoPorIdQueryHandler(
             if (registro is null)
                 return Result.Fail(ResultadosErro.RegistroNaoEncontradoErro(query.Id));
 
-            var result = new SelecionarContatoPorIdResult(
-                registro.Id,
-                registro.Nome,
-                registro.Telefone,
-                registro.Email,
-                registro.Empresa,
-                registro.Cargo,
-                registro.Compromissos.Select(r => new DetalhesCompromissoContatoDto(
-                    r.Assunto,
-                    r.Data,
-                    r.HoraInicio,
-                    r.HoraTermino
-                    )).ToImmutableList()
-                );
+            var result = mapper.Map<SelecionarContatoPorIdResult>(registro);
 
             return Result.Ok(result);
         }
