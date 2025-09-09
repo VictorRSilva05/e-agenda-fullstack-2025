@@ -1,4 +1,5 @@
-﻿using Microsoft.Extensions.Configuration;
+﻿using FluentValidation;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Serilog;
@@ -16,6 +17,8 @@ public static class DependencyInjection
     {
         services.AddSerilogConfig(logging, configuration);
 
+        var assembly = typeof(DependencyInjection).Assembly;
+
         services.AddMediatR(config =>
         {
             var assembly = typeof(DependencyInjection).Assembly;
@@ -32,7 +35,9 @@ public static class DependencyInjection
 
             config.LicenseKey = licenseKey;
 
-        }, typeof(DependencyInjection).Assembly);
+        }, assembly);
+        
+        services.AddValidatorsFromAssembly(assembly);
 
         return services;
     }

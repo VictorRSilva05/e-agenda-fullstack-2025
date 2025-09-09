@@ -4,12 +4,14 @@ using eAgenda.Core.Aplicacao.ModuloContato.Commands;
 using eAgenda.Core.Dominio.Compartilhado;
 using eAgenda.Core.Dominio.ModuloContato;
 using FluentResults;
+using FluentValidation;
 using MediatR;
 using Microsoft.Extensions.Logging;
 
 namespace eAgenda.Core.Aplicacao.ModuloContato.Cadastrar;
 
 public class CadastrarContatoCommandHandler(
+    IValidator<CadastrarContatoCommand> validator,
     IMapper mapper,
     IRepositorioContato repositorioContato,
     IUnitOfWork unitOfWork,
@@ -19,6 +21,17 @@ public class CadastrarContatoCommandHandler(
     public async Task<Result<CadastrarContatoResult>> Handle(
         CadastrarContatoCommand command, CancellationToken cancellationToken)
     {
+        var resultadoValidacao = await validator.ValidateAsync(command);
+
+        if (!resultadoValidacao.IsValid)
+        {
+            var erros = resultadoValidacao.Errors.Select(e => e.ErrorMessage);
+
+            var erroFormatado = ResultadosErro.RequisicaoInvalidaErro(resultadoValidacao.Errors.Select(e => e.ErrorMessage));
+
+            return Result.Fail(erroFormatado);
+        }
+
         var registros = await repositorioContato.SelecionarRegistrosAsync();
 
         if (registros.Any(i => i.Nome.Equals(command.Nome)))

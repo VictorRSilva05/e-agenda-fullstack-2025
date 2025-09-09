@@ -11,7 +11,7 @@ public abstract class ResultadosErro
             .WithMetadata("TipoErro", "RequisicaoInvalida");
     }
 
-    public static Error RequisicaoInvalidaErro(List<string> erros)
+    public static Error RequisicaoInvalidaErro(IEnumerable<string> erros)
     {
         return new Error("Requisição inválida")
             .CausedBy(erros)
@@ -31,6 +31,14 @@ public abstract class ResultadosErro
             .CausedBy("Não foi possível obter o registro com o ID: " + id)
             .WithMetadata("TipoErro", "RegistroNaoEncontrado");
     }
+
+    public static Error RegistroNaoEncontradoErro(string registro)
+    {
+        return new Error("Registro não encontrado")
+            .CausedBy("Não foi possível obter o registro: " + registro)
+            .WithMetadata("TipoErro", "RegistroNaoEncontrado");
+    }
+
 
     public static Error ExclusaoBloqueadaErro(string mensagemErro)
     {
